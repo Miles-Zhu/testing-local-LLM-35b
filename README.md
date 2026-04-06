@@ -1,242 +1,70 @@
-# 贪吃蛇游戏 - 开发文档
+# Local LLM Test Report - Snake Game Code Generation Task
 
-## 项目概述
-
-一个基于 HTML5 Canvas 和原生 JavaScript 实现的现代风格贪吃蛇游戏，采用响应式设计，支持桌面和移动端操作。
+*Test date: 2026-04-06*
 
 ---
 
-## 技术栈
+## 1. Local Environment
 
-| 技术 | 说明 |
+### 1.1 Hardware Configuration
+
+| Item | Specification |
 |------|------|
-| HTML5 Canvas | 游戏画面渲染 |
-| JavaScript (ES6+) | 游戏逻辑控制 |
-| Tailwind CSS | 界面样式布局 |
-| Google Fonts | 现代化字体 |
+| Device Model | MacBook |
+| CPU | M2 Max |
+| Memory (RAM) | 96GB unified memory |
+| Storage | 2TB |
+| GPU / NPU | 12 + 38 |
 
----
+### 1.2 Software Configuration
 
-## 核心功能
-
-### 1. 基础游戏功能
-
-#### 1.1 蛇的控制
-- **控制方式**
-  - 键盘：方向键 (↑↓←→) 或 WASD 键
-  - 触摸屏：移动端显示虚拟方向按钮
-
-- **移动机制**
-  - 蛇头始终沿当前方向移动
-  - 防止反向移动（如向右时无法直接向左）
-  - 使用 `nextDirection` 缓冲输入，每帧更新一次方向，避免快速按键导致的自撞 BUG
-
-#### 1.2 食物系统
-- 随机生成食物位置，确保不与蛇身重叠
-- 吃到食物后：
-  - 分数 +10
-  - 蛇身增长（不移除尾部）
-  - 触发粒子特效
-  - 速度提升
-
-#### 1.3 碰撞检测
-- **墙壁碰撞**：蛇头触碰到画布边缘
-- **自身碰撞**：蛇头与身体任何节段重叠
-
-#### 1.4 速度系统
-- 初始速度：150ms/帧
-- 每次吃食物速度提升 2ms
-- 最小速度：50ms（最快）
-
----
-
-### 2. 分数系统
-
-#### 2.1 分数类型
-| 类型 | 说明 | 存储方式 |
-|------|------|----------|
-| 当前分数 | 本局游戏得分 | 内存变量 `state.score` |
-| 最高分 | 历史最佳成绩 | `localStorage` 持久化 |
-
-#### 2.2 分数计算
-- 每吃一个食物：`+10 分`
-- 最高分自动保存到浏览器本地存储
-- 使用键名：`snakeHighScore`
-
----
-
-### 3. 游戏状态管理
-
-#### 3.1 状态流转
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                    初始加载                              │
-│  (显示 "开始游戏" 遮罩，读取最高分)                         │
-└──────────────────┬──────────────────────────────────────┘
-                   │
-                   ▼
-        ┌──────────────────┐
-        │   点击 "开始游戏"   │
-        └────────┬─────────┘
-                 │
-                 ▼
-    ┌────────────────────────┐
-    │      游戏进行中          │
-    │  - 蛇持续移动            │
-    │  - 实时渲染画面          │
-    │  - 检测碰撞/吃食物        │
-    └────────┬───────────────┘
-             │
-     ┌───────┴───────┐
-     │               │
-     ▼               ▼
-┌──────────┐  ┌──────────────┐
-│ 吃到食物  │  │  碰撞/撞墙     │
-│ +10 分    │  │  (游戏结束)    │
-│ 加速     │  └──────┬───────┘
-│ 生成新食物│         │
-└──────────┘         │
-     │                ▼
-     └──────────┐ ┌──────────────┐
-                │ │  显示游戏结束  │
-                │ │  更新最高分    │
-                │ │  点击再玩一次  │
-                └─►│  重置游戏     │
-                   └──────────────┘
-```
-
-#### 3.2 状态数据结构
-
-```javascript
-{
-    snake: [                     // 蛇身数组（从头部到尾部）
-        { x: 400, y: 300 },     // 头部
-        { x: 380, y: 300 },     // 身体
-        { x: 360, y: 300 }      // 尾部
-    ],
-    food: { x: 200, y: 150 },   // 食物位置
-    direction: 'right',         // 当前方向
-    nextDirection: 'right',     // 下一帧方向（输入缓冲）
-    score: 0,                   // 当前分数
-    highScore: 150,             // 最高分（从 localStorage 读取）
-    gameLoop: null,             // setInterval 定时器 ID
-    isPlaying: false,           // 游戏进行中
-    isPaused: false,            // 暂停中
-    speed: 150                   // 当前速度（ms）
-}
-```
-
----
-
-### 4. 持久化存储
-
-#### 4.1 存储位置
-```
-localStorage
-└── snakeHighScore: "150"  // 字符串类型，存储最高分
-```
-
-#### 4.2 存储时机
-- **游戏结束时**：如果当前分数超过最高分，自动更新
-- **页面加载时**：读取并显示最高分
-
-#### 4.3 数据结构
-| 键名 | 值类型 | 说明 |
-|------|--------|------|
-| `snakeHighScore` | 字符串 | 存储整数形式的最高分 |
-
----
-
-### 5. 视觉特效
-
-#### 5.1 动画效果
-| 效果 | 实现方式 | CSS 动画 |
-|------|----------|----------|
-| 蛇头呼吸 | 缩放动画 | `headBreathe` 2s 无限循环 |
-| 食物脉冲 | 缩放 + 外发光 | `foodPulse` 1.5s 无限循环 |
-| 粒子爆炸 | JS 生成 + CSS 动画 | `particleFade` 0.8s |
-| 得分浮动 | 文字向上飘动 | `scoreFloatUp` 0.8s |
-| 遮罩弹窗 | 缩放 + 透明度 | CSS transition |
-
-#### 5.2 特效触发
-- **吃食物**：8 个粒子向四周扩散 + "+10" 浮动文字
-- **死亡**：蛇头位置炸裂成 20 个碎片
-
----
-
-## 关键函数说明
-
-### 游戏核心
-
-| 函数 | 作用 | 触发时机 |
-|------|------|----------|
-| `resetGame()` | 初始化蛇身、分数、速度 | 点击开始/重新开始 |
-| `spawnFood()` | 随机生成不重叠的食物 | 每次吃食物后 |
-| `gameLoop()` | 主循环：移动 + 碰撞检测 | 定时器调用 |
-| `checkCollision()` | 检测是否撞墙或撞自己 | 每帧移动后 |
-| `draw()` | 清空画布并重绘所有内容 | 每帧 |
-| `drawSnake()` | 绘制蛇身（带渐变） | 每帧 |
-| `drawFood()` | 绘制食物（带发光） | 每帧 |
-
-### 辅助函数
-
-| 函数 | 作用 |
+| Item | Version |
 |------|------|
-| `isOnSnake()` | 检查坐标是否在蛇身上 |
-| `increaseSpeed()` | 吃到食物后提升速度 |
-| `roundedRect()` | 绘制圆角矩形 |
-| `createFoodEffect()` | 吃食物时的粒子特效 |
-| `createDeathEffect()` | 死亡时的碎片特效 |
+| Operating System | macOS 25.4.0 (Darwin) |
+| LLM Inference Framework | oMLX v0.3.4 |
+| Model Name | MLX-Qwen3.5-35B-A3B-Claude-4.6-Opus-Reasoning-Distilled-8bit |
+| Model Quantization | Q8_0 |
+| Context Window | 40K tokens |
+| Runtime Environment | Claude CLI |
+| Skills | frontend-design |
 
 ---
 
-## 文件结构
+## 2. Test Results
 
-```
-llm-base/
-├── index.html          # 游戏主文件（HTML + CSS + JS 一体化）
-└── DEVELOPMENT.md      # 本开发文档
-```
+![](https://cdn.jsdelivr.net/gh/Miles-Zhu/bucket@main/imgs/20260406220251775.png)
+
 
 ---
 
-## 扩展建议
+## 3. Main Bottlenecks
 
-### 可添加的功能
-1. **暂停功能**：按空格键暂停/继续
-2. **难度选择**：开始界面提供简单/普通/困难模式
-3. **音效**：吃食物、死亡时的音效
-4. **皮肤系统**：可更换蛇和食物的视觉样式
-5. **排行榜**：显示最近 10 局的游戏记录
-6. **改进的存档**：记录游戏历史、解锁成就等
+### 3.1 Inference Speed
 
-### 代码优化建议
-1. 将 CSS/JS 拆分为独立文件
-2. 使用 ES Module 模块化
-3. 添加 TypeScript 类型定义
-4. 引入游戏框架（Phaser、Kaboom.js）
+- **Generation speed is limited**: On consumer hardware, the 35B model generates at roughly 45-60 tok/s, and the wait time per run is still within an acceptable range.
 
----
+### 3.2 Memory Pressure
 
-## 浏览器兼容性
+![](https://cdn.jsdelivr.net/gh/Miles-Zhu/bucket@main/imgs/20260406222035473.png)
 
-- Chrome / Edge / Safari / Firefox 现代版本
-- 移动端：iOS Safari、Android Chrome
-- 需要支持 Canvas 和 ES6+ 语法
+- The 35B model (Q8_K_M quantization) requires about 60GB of memory, and the overall runtime remains stable.
+
+### 3.3 Context Length
+
+- A 32k context is clearly insufficient. After only 2-3 interaction rounds, it exceeds the limit and throws an error. Compared with the native 1M context in `claude code`, this is 31.25 times smaller and is the main bottleneck.
+- Supporting a 1M context would require roughly `1TB-class memory`, which is not feasible for local hardware.
+
+### 3.4 Code Quality Limitations
+
+- It can complete a simple game and produce a visually appealing interface.
 
 ---
 
-## 数据来源说明
+## 4. Summary and Recommendations
 
-| 数据来源 | 描述 | 持久化 |
-|----------|------|--------|
-| `highScore` | 从 `localStorage.snakeHighScore` 读取 | 是 |
-| 蛇身数据 | 游戏运行时动态计算 | 否 |
-| 食物位置 | 游戏运行时随机生成 | 否 |
-| 分数 | 游戏运行时累加 | 否（仅最高分） |
-| 速度 | 根据分数动态调整 | 否 |
+| Recommendation | Notes |
+|------|------|
+| Quantization Choice | 35B Q8_K_M is usable |
+| Programming Bottlenecks | 32K context is not enough, and the M2 Max 400GB/s bandwidth ceiling is still insufficient |
 
 ---
-
-*最后更新：2026-04-06*
