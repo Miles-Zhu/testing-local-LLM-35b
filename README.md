@@ -1,5 +1,7 @@
 # Local LLM Test Report - Snake Game Code Generation Task
 
+![](https://cdn.jsdelivr.net/gh/Miles-Zhu/bucket@main/imgs/20260406224042787.png)
+
 *Test date: 2026-04-06*
 
 ---
