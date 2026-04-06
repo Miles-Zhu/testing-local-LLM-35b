@@ -53,6 +53,8 @@
 
 ### 3.3 Context Length
 
+![](https://cdn.jsdelivr.net/gh/Miles-Zhu/bucket@main/imgs/20260407014441638.png)
+
 - A 32k context is clearly insufficient. After only 2-3 interaction rounds, it exceeds the limit and throws an error. Compared with the native 1M context in `claude code`, this is 31.25 times smaller and is the main bottleneck.
 - Supporting a 1M context would require roughly `1TB-class memory`, which is not feasible for local hardware.
 
